@@ -178,6 +178,15 @@ function command_install () {
     if (!$res) die(mysql_error());
     
     $sql = '
+CREATE TABLE IF NOT EXISTS `metadata` (
+  `dbversion` varchar(16) NOT NULL,
+  PRIMARY KEY (`dbversion`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+    ';
+    $res = mysql_query($sql);
+    if (!$res) die(mysql_error());
+
+    $sql = '
 CREATE TABLE IF NOT EXISTS `contact` (
   `cid` mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
   `firstName` varchar(255) NOT NULL,
@@ -279,6 +288,16 @@ CREATE TABLE IF NOT EXISTS `user` (
     $res = mysql_query($sql);
     if (!$res) die(mysql_error());
     
+    $sql = "
+        INSERT INTO `metadata`
+        (`dbversion`)
+        VALUES
+        ('$version')
+    ";
+    $res = mysql_query($sql);
+    if (!$res) die(mysql_error());
+
+
     // Add admin contact and user
     $sql = "
         INSERT INTO `contact`
