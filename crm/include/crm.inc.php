@@ -48,10 +48,8 @@ require_once('key/key.inc.php');
 
 // Non-module core functions ///////////////////////////////////////////////////
 
-// Command handlers
-require_once('command.inc.php');
-
 // Theme functions
 require_once('theme.inc.php');
 
 ?>
+
