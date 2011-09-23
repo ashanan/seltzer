@@ -206,8 +206,17 @@ function user_check_reset_code ($code) {
 function command_login () {
     global $esc_post;
     
+    // Query database for salt
+    $sql = "
+        SELECT `salt`
+        FROM `user`
+        WHERE `username`='$esc_post[username]'";
+    $res = mysql_query($sql);
+    if (!$res) die(mysql_error());
+    $row = mysql_fetch_assoc($res);
+
     // Calculate hash
-    $esc_hash = sha1($_POST['password']);
+    $esc_hash = sha1($_POST['password'] . $row['salt']);
     
     // Query database for given user
     $sql = "

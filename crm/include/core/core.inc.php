@@ -154,6 +154,22 @@ function theme_install_form () {
 }
 
 /**
+ * This function generates a password salt as a string of length $max taken from
+ * variable $characterList.
+ * @param $max integer The number of characters in the string
+ */
+function generate_salt ($max = 16) {
+	$characterList = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+	$i = 0;
+	$salt = "";
+	do {
+		$salt .= $characterList{mt_rand(0,strlen($characterList)-1)};
+		$i++;
+	} while ($i < $max);
+	return $salt;
+}
+
+/**
  * Handle installation request.
  *
  * @return The url to redirect to on completion.
@@ -282,6 +298,7 @@ CREATE TABLE IF NOT EXISTS `user` (
   `cid` mediumint(11) unsigned NOT NULL,
   `username` varchar(32) NOT NULL,
   `hash` varchar(40) NOT NULL,
+  `salt` char(16) NOT NULL,
   PRIMARY KEY (`cid`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 ROW_FORMAT=DYNAMIC;
     ';
@@ -308,13 +325,14 @@ CREATE TABLE IF NOT EXISTS `user` (
     $res = mysql_query($sql);
     if (!$res) die(mysql_error());
     $cid = mysql_insert_id();
+    $salt = generate_salt();
     
-    $hash = mysql_real_escape_string(sha1($_POST['password']));
+    $hash = mysql_real_escape_string(sha1($_POST['password'] . $salt));
     $sql = "
         INSERT INTO `user`
-        (`cid`, `username`, `hash`)
+        (`cid`, `username`, `hash`, `salt`)
         VALUES
-        ('$cid', 'admin', '$hash')
+        ('$cid', 'admin', '$hash', `$salt`)
     ";
     $res = mysql_query($sql);
     if (!$res) die(mysql_error());
@@ -334,4 +352,47 @@ CREATE TABLE IF NOT EXISTS `user` (
     return 'login.php';
 }
 
+function command_upgrade () {
+    global $esc_post;
+
+    // Check whether already installed
+    $sql = "SHOW TABLES LIKE 'contact'";
+    $res = mysql_query($sql);
+    if (!$res) die(mysql_error());
+    $row = mysql_fetch_assoc($res);
+    if (!$row) {
+        error_register('The database is probably not installed. Not upgrading.');
+        return 'index.php';
+    }
+
+    $sql = 'SELECT `dbversion` FROM `metadata`';
+    $res = mysql_query($sql);
+    if (!$res) die(mysql_error());
+
+    $row = mysql_fetch_assoc($sql);
+    while ($row["dbversion"] != $version) {
+        switch ($row["dbversion"]) {
+	    case "0.2.0":
+	        $sql = '
+                    ALTER TABLE `user` ADD `salt` CHAR(16) NOT NULL AFTER `hash`
+                ';
+                $res = mysql_query($sql);
+                if (!$res) die(mysql_error());
+		
+                $sql = '
+                     UPDATE TABLE `metadata` SET `dbversion` = '0.3.0'
+                ';
+                $res = mysql_query($sql);
+                if (!$res) die(mysql_error());
+		
+	    default:
+		error_register('Database version unknown!');
+		return 'index.php';
+	}
+    }
+}
+ 
+
+
 ?>
+
