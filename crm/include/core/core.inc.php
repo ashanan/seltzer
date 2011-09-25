@@ -332,7 +332,7 @@ CREATE TABLE IF NOT EXISTS `user` (
         INSERT INTO `user`
         (`cid`, `username`, `hash`, `salt`)
         VALUES
-        ('$cid', 'admin', '$hash', `$salt`)
+        ('$cid', 'admin', '$hash', '$salt')
     ";
     $res = mysql_query($sql);
     if (!$res) die(mysql_error());
