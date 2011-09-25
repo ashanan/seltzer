@@ -380,7 +380,7 @@ function command_upgrade () {
                 if (!$res) die(mysql_error());
 		
                 $sql = '
-                     UPDATE TABLE `metadata` SET `dbversion` = '0.3.0'
+                     UPDATE TABLE `metadata` SET `dbversion` = `0.3.0`
                 ';
                 $res = mysql_query($sql);
                 if (!$res) die(mysql_error());
